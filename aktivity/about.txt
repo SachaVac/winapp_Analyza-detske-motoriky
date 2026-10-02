@@ -1,0 +1,111 @@
+main1
+
+doba_pohybu_sekundy
+T = t_end - t_start
+
+casova_synchronizace_L_a_P (Pearsonova korelace rychlostí)
+v_i = sqrt(v_x,i^2 + v_y,i^2)
+r_L_R = sum((v_L,i - mean_v_L)*(v_R,i - mean_v_R)) / sqrt(sum((v_L,i - mean_v_L)^2) * sum((v_R,i - mean_v_R)^2))
+
+plynulost_pohybu_jerk (L_ukazovak_norm_jerk / R_ukazovak_norm_jerk)
+j_x = d^3x / dt^3,  j_y = d^3y / dt^3
+J = sum(j_x^2 + j_y^2) * dt
+S = sum(v) * dt
+Norm_Jerk = sqrt(0.5 * T^5 * J) / (S^2 + 1e-6)
+
+uhlova_extenze (L_koncetina_max_deg / R_koncetina_max_deg)
+theta_i = angle(Rameno, Loket, Zapesti)
+Max_Angle = max(theta_i)
+
+rozsah_pohybu_ROM (L_koncetina_rom_deg / R_koncetina_rom_deg)
+ROM = max(theta_i) - min(theta_i)
+
+---main2
+doba_pohybu_sekundy
+T = t_end - t_start
+
+navstivena_vsechna_kolecka
+all_visited = (visited_circles_count == total_circles)
+Podmínka návštěvy: dist(prst, střed_kolečka) <= poloměr_kolečka
+
+pocet_detekovanych_kolecek
+total_circles = count(kolečka s circularity > 0.60 v zóně)
+
+pocet_navstivenych_kolecek
+visited_circles_count = count(kolečka s visited == True)
+
+casova_synchronizace_L_a_P (Pearsonova korelace rychlostí)
+v_i = sqrt(v_x,i^2 + v_y,i^2)
+r_L_R = sum((v_L,i - mean_v_L)*(v_R,i - mean_v_R)) / sqrt(sum((v_L,i - mean_v_L)^2) * sum((v_R,i - mean_v_R)^2))
+
+plynulost_pohybu_jerk (L_ukazovak_norm_jerk / R_ukazovak_norm_jerk)
+j_x = d^3x / dt^3,  j_y = d^3y / dt^3
+J = sum(j_x^2 + j_y^2) * dt
+S = sum(v) * dt
+Norm_Jerk = sqrt(0.5 * T^5 * J) / (S^2 + 1e-6)
+
+delka_drah_px (L_ukazovak_delka_px / R_ukazovak_delka_px / rozdil_drah_px)
+L_path_length = sum(v_L) * dt
+R_path_length = sum(v_R) * dt
+path_difference = abs(L_path_length - R_path_length)
+
+---main3
+Doba pohybu sekundy:
+T = t_end - t_start
+
+Časová synchronizace L a P:
+r = sum((v_L - mean(v_L)) * (v_R - mean(v_R))) / sqrt(sum((v_L - mean(v_L))^2) * sum((v_R - mean(v_R))^2))
+Kde v_L = sqrt(v_Lx^2 + v_Ly^2), v_R = sqrt(v_Rx^2 + v_Ry^2)
+
+Plynulost pohybu (L / R ukazovák norm_jerk):
+Dimensionless Jerk = sqrt(0.5 * T^5 * sum(j_x^2 + j_y^2) * dt) / (S^2 + 1e-6)
+Kde j_x, j_y jsou třetí derivace polohy podle času a S je celková délka dráhy.
+
+Délka drah (L / R ukazovák délka px):
+S = sum(v * dt) = sum(sqrt(v_x^2 + v_y^2) * dt)
+
+Rozdíl drah px:
+Delta_S = |S_L - S_R|
+
+
+---main4
+doba_pohybu_sekundy
+T = t_end - t_start
+
+casova_synchronizace_L_a_P (Pearsonova korelace rychlostí)
+v_i = sqrt(v_x,i^2 + v_y,i^2)
+r_L_R = sum((v_L,i - mean_v_L)*(v_R,i - mean_v_R)) / sqrt(sum((v_L,i - mean_v_L)^2) * sum((v_R,i - mean_v_R)^2))
+
+plynulost_pohybu_jerk (L_ukazovak_norm_jerk / R_ukazovak_norm_jerk)
+j_x = d^3x / dt^3,  j_y = d^3y / dt^3
+J = sum(j_x^2 + j_y^2) * dt
+S = sum(v) * dt
+Norm_Jerk = sqrt(0.5 * T^5 * J) / (S^2 + 1e-6)
+
+delka_drah_px (L_ukazovak_delka_px / R_ukazovak_delka_px / rozdil_drah_px)
+L_path_length = sum(v_L) * dt
+R_path_length = sum(v_R) * dt
+path_difference = abs(L_path_length - R_path_length)
+
+
+---main5
+Doba pohybu sekundy:
+T = t_end - t_start
+
+Míra interference (zrcadlení korelace rychlostí):
+r = sum((v_L - mean(v_L)) * (v_R - mean(v_R))) / sqrt(sum((v_L - mean(v_L))^2) * sum((v_R - mean(v_R))^2))
+Kde v_L = sqrt(v_Lx^2 + v_Ly^2), v_R = sqrt(v_Rx^2 + v_Ry^2)
+
+Časová přesnost (časy cyklů):
+t_cycle = T / 3.0
+
+Stabilita provedení (variabilita tempa CV %):
+CV = (std(t_cycles) / mean(t_cycles)) * 100
+
+Stabilita provedení (plynulost jerk L/R ukazovák):
+Dimensionless Jerk = sqrt(0.5 * T^5 * sum(j_x^2 + j_y^2) * dt) / (S^2 + 1e-6)
+Kde j_x, j_y jsou třetí derivace polohy podle času a S je celková délka dráhy S = sum(v * dt).
+
+
+---main6
+ 
