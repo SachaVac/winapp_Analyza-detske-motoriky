@@ -59,7 +59,7 @@ class OneEuroFilter:
         self.t_prev = t
         return x_filtered
 
-# --- HLAVNÍ SKRIPT (AKTIVITA 8 - KRESLEŇÍ OSMIČKY JEDNOU RUKOU) ---
+# --- HLAVNÍ SKRIPT (AKTIVITA 9 - KRESLEŇÍ OSMIČKY JEDNOU RUKOU) ---
 fps = cap.get(cv2.CAP_PROP_FPS) or 60.0
 width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
 height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
