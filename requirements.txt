@@ -1,8 +1,9 @@
 customtkinter
-pillow
-opencv-python
+Pillow
+opencv-contrib-python
 numpy
 pandas
-mediapipe
+mediapipe==<verze, která u vás běží>
 shapely
-pyinstaller
+openpyxl
+
