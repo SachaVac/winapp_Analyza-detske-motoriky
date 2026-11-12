@@ -2449,7 +2449,11 @@ def _write_single_outputs(
 
     cfg = get_activity_config(activity_id)
     df = _records_to_dataframe(records, homography=homography)
-    center_x = BOARD_SIDE_CM / 2.0 if homography is not None else (float(polygon.centroid.x) if polygon is not None else None)
+    center_x = (
+        BOARD_SIDE_CM / 2.0
+        if homography is not None
+        else (float(polygon.centroid.x) if polygon is not None else None)
+    )
     output_metrics = calculate_all_metrics(df=df, activity_id=activity_id, center_x=center_x)
     output_metrics["metadata"].update(
         _build_video_metadata(width, height, fps, homography, video_format_warnings)
@@ -2472,31 +2476,57 @@ def _write_single_outputs(
 
     source_cap = cv2.VideoCapture(video_path)
     if not source_cap.isOpened():
-        raise RuntimeError(f"Zdrojové video nelze znovu otevřít: {video_path}")
+        raise RuntimeError(f"Zdrojové video nelze otevřít: {video_path}")
 
     trajectory_export = []
     first_source_frame = None
-    next_source_frame = None
+    last_valid_frame = None
+    last_read_frame_id = None
+    next_source_frame = 0
+
     try:
         for record_index, record in enumerate(records):
             target_frame = int(record["frame_id"])
-            if next_source_frame is None or target_frame < next_source_frame:
-                source_cap.set(cv2.CAP_PROP_POS_FRAMES, target_frame)
-                next_source_frame = target_frame
-            while next_source_frame < target_frame:
-                if not source_cap.grab():
-                    raise RuntimeError(f"Nelze přeskočit na snímek {target_frame} v původním videu.")
-                next_source_frame += 1
-            ok, source_frame = source_cap.read()
-            if not ok or source_frame is None:
-                raise RuntimeError(f"Nelze znovu načíst snímek {target_frame} z původního videa.")
-            next_source_frame = target_frame + 1
+
+            if last_read_frame_id == target_frame and last_valid_frame is not None:
+                source_frame = last_valid_frame.copy()
+            else:
+                if target_frame < next_source_frame:
+                    source_cap.release()
+                    source_cap = cv2.VideoCapture(video_path)
+                    if not source_cap.isOpened():
+                        raise RuntimeError(f"Zdrojové video nelze znovu otevřít: {video_path}")
+                    next_source_frame = 0
+
+                eof_reached = False
+                while next_source_frame < target_frame:
+                    if not source_cap.grab():
+                        eof_reached = True
+                        break
+                    next_source_frame += 1
+
+                if eof_reached:
+                    ok, source_frame = False, None
+                else:
+                    ok, source_frame = source_cap.read()
+                    next_source_frame += 1
+
+                if not ok or source_frame is None:
+                    if last_valid_frame is not None:
+                        source_frame = last_valid_frame.copy()
+                    else:
+                        source_frame = np.zeros((height, width, 3), dtype=np.uint8)
+                else:
+                    last_valid_frame = source_frame.copy()
+                    last_read_frame_id = target_frame
+
             source_height, source_width = source_frame.shape[:2]
             if (source_width, source_height) != (width, height):
                 raise RuntimeError(
                     "Rozměry při exportu neodpovídají rozměrům při analýze: "
                     f"analýza {width}x{height}, export {source_width}x{source_height}."
                 )
+
             if video_writer is None:
                 video_writer = cv2.VideoWriter(
                     video_trim_path, fourcc, fps, (source_width, source_height)
@@ -2507,13 +2537,16 @@ def _write_single_outputs(
                     raise RuntimeError(
                         f"Nepodařilo se vytvořit výstupní video: {video_trim_path}"
                     )
+
             if first_source_frame is None:
                 first_source_frame = source_frame.copy()
+
             annotated_frame = source_frame
             if activity_hull is not None:
                 cv2.polylines(annotated_frame, [activity_hull], True, (0, 215, 255), 2)
             if hull is not None:
                 cv2.polylines(annotated_frame, [hull], True, (0, 255, 0), 3)
+
             for side, color, enabled in (
                 ("L", (255, 0, 0), cfg["track_left_hand"]),
                 ("R", (0, 255, 255), cfg["track_right_hand"]),
@@ -2532,6 +2565,7 @@ def _write_single_outputs(
                             annotated_frame, p, (0, 0, 255), cv2.MARKER_TILTED_CROSS,
                             18, 2, cv2.LINE_AA,
                         )
+
             video_writer.write(annotated_frame)
 
             def point_json(side, enabled):
@@ -2609,7 +2643,8 @@ def _write_single_outputs(
     finally:
         if video_writer is not None:
             video_writer.release()
-        source_cap.release()
+        if source_cap is not None:
+            source_cap.release()
 
     with open(os.path.join(output_dir, "trajectory.json"), "w", encoding="utf-8") as f:
         json.dump({
@@ -2654,9 +2689,9 @@ def _write_single_outputs(
             "frames": trajectory_export,
         }, f, indent=4, ensure_ascii=False, allow_nan=False)
 
-
     if first_source_frame is None:
         raise RuntimeError("Nebyl načten žádný zdrojový snímek pro vizualizaci trajektorie.")
+
     bg_image = first_source_frame.copy()
     if activity_hull is not None:
         cv2.polylines(bg_image, [activity_hull], True, (0, 215, 255), 2)
@@ -2664,14 +2699,18 @@ def _write_single_outputs(
         cv2.polylines(bg_image, [hull], True, (0, 255, 0), 3)
     _draw_finite_path(bg_image, df, "L", (255, 0, 0))
     _draw_finite_path(bg_image, df, "R", (0, 255, 255))
-    if not cv2.imwrite(os.path.join(output_dir, "trajectory_plot.png"), bg_image):
-        raise RuntimeError("Nepodařilo se uložit trajectory_plot.png")
+
+    plot_path = os.path.join(output_dir, "trajectory_plot.png")
+    ok_encode, encoded_img = cv2.imencode(".png", bg_image)
+    if not ok_encode:
+        raise RuntimeError("Nepodařilo se zakódovat trajectory_plot.png")
+    with open(plot_path, "wb") as f:
+        f.write(encoded_img.tobytes())
 
     with open(os.path.join(output_dir, "data.json"), "w", encoding="utf-8") as f:
         json.dump(output_metrics, f, indent=4, ensure_ascii=False, allow_nan=False)
+
     return output_dir
-
-
 def run_pipeline(activity_id: int, video_path: str, frame_callback=None, cancel_event=None):
     """Analyze one video and export native-resolution frames by rereading the source."""
     if activity_id not in range(1, 11):
