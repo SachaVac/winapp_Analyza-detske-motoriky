@@ -418,7 +418,7 @@ Do instalátoru vložte **celou** složku `dist\MotorAnalysis\`. Minimální skr
 ```
 [Setup]
 AppName=Motor Analysis
-AppVersion=2.1.1
+AppVersion=2.0
 DefaultDirName={autopf}\MotorAnalysis
 DefaultGroupName=Motor Analysis
 OutputBaseFilename=MotorAnalysis_Setup
@@ -447,20 +447,3 @@ Aplikace nezapisuje do instalační složky: výsledky ukládá vedle videí a p
 
 ---
 
-## 13. Historie verzí
-
-**2.1.1**
-- cesty s diakritikou na Windows (název složky nebo uživatele): obrázek se ukládá bez `cv2.imwrite`, anotované video se zapisuje přes dočasnou ASCII složku, vstupní video se otevírá přes krátkou (8.3) cestu,
-- aplikace bez konzole: bezpečné `stdout/stderr`, chyby se zapisují do `MotorAnalysis_error.log` v domovské složce uživatele,
-- doplněn postup sestavení instalačního balíčku (kapitola 12).
-
-**2.1.0**
-- vyhlazení polohy bez zpoždění (nahrazuje filtr OneEuro, který při restartu úseku vytvářel falešné skoky jerku),
-- odhad jerku lokálním polynomem a vynechání okrajů úseků; přepnutí prst/dlaň už nevytváří skok,
-- filtr přepínání prst/dlaň (0,1 s),
-- dvoustupňové odfiltrování falešných skoků (online a offline) včetně hlídání střední dlaně při změně sledovaného bodu,
-- normovaný jerk po jednotlivých tazích (nezávislý na počtu pohybů),
-- úhel lokte ve 3D s mediánovým filtrem, rezerva pro překročení středové linie,
-- sekce „kvalita dat“ a hodnocení spolehlivosti v tabulce, verze pipeline ve výstupech,
-- zápis XLSX s číselnými buňkami, desetinná tečka v CSV, záznam chyb do `batch_errors.log`,
-- aplikace: roztažitelné okno, náhled se zachovaným poměrem 9:16, bezpečné předávání snímků z vlákna zpracování.
